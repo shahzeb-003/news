@@ -10,6 +10,7 @@
           <h3 class="text-primary">Profile Details</h3>
           <p class="lead"><strong>Email:</strong> {{ userData.email }}</p>
           <p class="lead"><strong>Date of Birth:</strong> {{ userData.date_of_birth }}</p>
+          <p class="lead"><strong>Favourite Category:</strong> {{ userData.favorite_category }}</p>
         </div>
         <div class="text-center mt-3">
           <button @click="logout" class="btn btn-danger">Logout</button>
@@ -28,6 +29,15 @@
             <label for="profileImage" class="form-label">Profile Image</label>
             <input type="file" class="form-control" id="profileImage" @change="onFileSelected">
           </div>
+          <div class="mb-3">
+          <label for="favoriteCategory" class="form-label">Favorite Category</label>
+          <select id="favoriteCategory" class="form-control" v-model="userData.favorite_category" required>
+            <option value="">Select a category</option>
+            <option value="SP">Sports</option>
+            <option value="WR">World</option>
+            <option value="FN">Finance</option>
+          </select>
+        </div>
           <button type="submit" class="btn btn-primary">Save Changes</button>
         </form>
       </div>
@@ -48,7 +58,8 @@
           userData: {
             email: '',
             date_of_birth: '',
-            profile_image: ''
+            profile_image: '',
+            favorite_category: ''
           },
           isAuthenticated: false,
           selectedFile: null as File | null,
@@ -120,6 +131,7 @@
           const formData = new FormData();
           formData.append('email', this.userData.email);
           formData.append('date_of_birth', this.userData.date_of_birth);
+          formData.append('favorite_category', this.userData.favorite_category)
           if (this.selectedFile) {
             formData.append('profile_image', this.selectedFile, this.selectedFile.name);
           }
