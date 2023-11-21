@@ -7,12 +7,13 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = UserCreationForm.Meta.fields + ('email', 'date_of_birth', 'profile_image',)
+        fields = UserCreationForm.Meta.fields + ('email', 'date_of_birth', 'profile_image', 'favorite_category',)
 
-from django import forms
-from .models import CustomUser
+    def __init__(self, *args, **kwargs):
+        super(CustomUserCreationForm, self).__init__(*args, **kwargs)
+        self.fields['favorite_category'].required = True
 
 class CustomUserChangeForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ['email', 'date_of_birth', 'profile_image']
+        fields = ['email', 'date_of_birth', 'profile_image', 'favorite_category']
