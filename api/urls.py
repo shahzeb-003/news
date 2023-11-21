@@ -13,7 +13,9 @@ urlpatterns = [
     path('api/check-authentication/', views.check_authentication, name='check-authentication'),
     path('api/user-details/', views.get_user_details, name='user-details'),
     path('api/update-user-details/', views.update_user_details, name='update_user_details'),
-
+    path('api/news/<str:category>/', views.get_news_by_category, name='get_news_by_category'),
+    path('api/news/<int:news_id>/comments/', views.get_comments, name='get_comments'),
+    path('api/news/<int:news_id>/submit-comment/', views.submit_comment, name='submit_comment'),
 ]
 
 if settings.DEBUG:
