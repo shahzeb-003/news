@@ -78,11 +78,8 @@ AUTH_USER_MODEL = 'api.CustomUser'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
     "http://localhost:8000",
-    "http://127.0.0.1:8000",
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -92,12 +89,13 @@ SESSION_COOKIE_SECURE = True
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost:8000"
 ]
 
-LOGIN_REDIRECT_URL = "http://localhost:5173/"
+LOGIN_REDIRECT_URL = "http://localhost:8000/"
 
-LOGIN_URL = '/login'
+LOGIN_URL = 'login/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -174,4 +172,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-INTERNAL_IPS = ['127.0.0.1']
+INTERNAL_IPS = ['']

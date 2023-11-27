@@ -6,23 +6,27 @@ from django.contrib.sessions.models import Session
 from django.conf import settings
 
 
-class CustomUser(AbstractUser):
+class Category(models.Model):
+    """
+    Model to represent a news category.
+    """
     CATEGORY_CHOICES = [
         ('SP', 'Sports'),
         ('WR', 'World'),
         ('FN', 'Finance'),
     ]
 
+    code = models.CharField(max_length=2, choices=CATEGORY_CHOICES, unique=True)
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
-    favorite_category = models.CharField(
-        max_length=2,
-        choices=CATEGORY_CHOICES,
-        default='SP',
-        blank=False,
-        null=False
-    )
+    favorite_categories = models.ManyToManyField(Category)  # Allows multiple categories to be chosen
 
 class News(models.Model):
     CATEGORY_CHOICES = [

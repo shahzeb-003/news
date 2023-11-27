@@ -1,10 +1,19 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from .forms import CustomUserCreationForm
+from django.contrib.auth import logout
+from .forms import CustomUserCreationForm, CustomUserChangeForm
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
+from .models import News, Comment
+import json
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+
+
+
+def main_spa(request: HttpRequest) -> HttpResponse:
+    return render(request, 'api/spa/index.html', {})
 
 @csrf_exempt
 def register_view(request):
@@ -17,14 +26,11 @@ def register_view(request):
         form = CustomUserCreationForm()
 
     
-    return render(request, 'register.html', {'form': form})
-
-
-# This can be changed with LoginView in urls.py
+    return render(request, './api/spa/register.html', {'form': form})
 
 @require_POST
 @csrf_exempt
-def logout_view(request):
+def logout_view(request) -> JsonResponse:
     logout(request)
     request.session.flush()
     print(f'User logged out. User is_authenticated: {request.user.is_authenticated}')
@@ -32,25 +38,26 @@ def logout_view(request):
 
 
 @never_cache
-def check_authentication(request):
+def check_authentication(request) -> JsonResponse:
     if request.user.is_authenticated:
         return JsonResponse({'isAuthenticated': True}, status=200)
     else:
         return JsonResponse({'isAuthenticated': False}, status=401)
 
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 
 @csrf_exempt
-def get_user_details(request):
+def get_user_details(request) -> JsonResponse:
     # Check if the user is authenticated
     if request.user.is_authenticated:
         user = request.user
+        # Get the list of favorite categories
+        favorite_categories = list(user.favorite_categories.values_list('code', flat=True))
+
         data = {
             'email': user.email,
             'date_of_birth': user.date_of_birth.strftime('%Y-%m-%d') if user.date_of_birth else None,
             'profile_image': user.profile_image.url if user.profile_image else None,
-            'favorite_category' : user.favorite_category
+            'favorite_categories': favorite_categories  # Change to favorite_categories
         }
         return JsonResponse(data)
     else:
@@ -58,33 +65,38 @@ def get_user_details(request):
         return JsonResponse({'error': 'User is not authenticated'})
 
 
-from django.views.decorators.http import require_http_methods
-from .forms import CustomUserChangeForm  # You need to create this form
-
 @login_required
 @require_http_methods(["POST"])
 @csrf_exempt
-def update_user_details(request):
+def update_user_details(request) -> JsonResponse:
+
+    print("POST Data:", request.POST)
+    print("FILES Data:", request.FILES)
+    
     user = request.user
     form = CustomUserChangeForm(request.POST, request.FILES, instance=user)
     if form.is_valid():
-        form.save()
+        user_obj = form.save(commit=False)
+        user_obj.save()
+        
+        if 'favorite_categories' in request.POST:
+            categories_ids = request.POST.getlist('favorite_categories')
+            user_obj.favorite_categories.set(categories_ids)
+
         return JsonResponse({'status': 'success'}, status=200)
     else:
+        print("Form Errors:", form.errors.as_data())
         return JsonResponse(form.errors, status=400)
-    
-from django.http import JsonResponse
-from .models import News
 
 @csrf_exempt
 @login_required
-def get_news_by_category(request, category):
+def get_news_by_category(request, category) -> JsonResponse:
     news_items = News.objects.filter(category=category)
     data = [{"id": item.id, "title": item.title, "text": item.text} for item in news_items]
     return JsonResponse(data, safe=False)
 
 @csrf_exempt
-def get_favorite_category(request):
+def get_favorite_category(request) -> JsonResponse:
 
     if request.user.is_authenticated:
         user = request.user
@@ -96,12 +108,9 @@ def get_favorite_category(request):
         # If user is not authenticated, return an appropriate response
         return JsonResponse({'error': 'User is not authenticated'})
     
-from django.http import JsonResponse
-from .models import News, Comment
-
 
 @csrf_exempt
-def get_comments(request, news_id):
+def get_comments(request, news_id) -> JsonResponse:
     try:
         news = News.objects.get(id=news_id)
         comments = Comment.objects.filter(news=news, parent=None).order_by('-created_at')  # Fetch top-level comments
@@ -115,14 +124,9 @@ def get_comments(request, news_id):
     except News.DoesNotExist:
         return JsonResponse({'error': 'News item not found'}, status=404)
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-import json
-
-
 @login_required
 @csrf_exempt
-def submit_comment(request, news_id):
+def submit_comment(request, news_id) -> JsonResponse:
     try:
         news = News.objects.get(id=news_id)
         data = json.loads(request.body)
@@ -145,3 +149,33 @@ def submit_comment(request, news_id):
         return JsonResponse({'error': 'News item not found'}, status=404)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    
+@login_required
+@csrf_exempt
+def edit_comment(request, comment_id) -> JsonResponse:
+    try:
+        comment = Comment.objects.get(id=comment_id, author=request.user)
+        data = json.loads(request.body)
+        comment_text = data.get('text')
+
+        if comment_text:
+            comment.text = comment_text
+            comment.save()
+            return JsonResponse({'status': 'Comment updated successfully'})
+        else:
+            return JsonResponse({'error': 'No text provided'}, status=400)
+
+    except Comment.DoesNotExist:
+        return JsonResponse({'error': 'Comment not found or not authorized'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+@login_required
+@csrf_exempt
+def delete_comment(request, comment_id) -> JsonResponse:
+    try:
+        comment = Comment.objects.get(id=comment_id, author=request.user)
+        comment.delete()
+        return JsonResponse({'status': 'Comment deleted successfully'})
+    except Comment.DoesNotExist:
+        return JsonResponse({'error': 'Comment not found or not authorized'}, status=404)

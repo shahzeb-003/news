@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
@@ -16,6 +16,10 @@ urlpatterns = [
     path('api/news/<str:category>/', views.get_news_by_category, name='get_news_by_category'),
     path('api/news/<int:news_id>/comments/', views.get_comments, name='get_comments'),
     path('api/news/<int:news_id>/submit-comment/', views.submit_comment, name='submit_comment'),
+    path('api/edit-comment/<int:comment_id>/', views.edit_comment, name='edit_comment'),
+    path('api/delete-comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
+    path('', views.main_spa, name='spa'),
+    path('profile/', views.main_spa, name='spa profile'),
 ]
 
 if settings.DEBUG:

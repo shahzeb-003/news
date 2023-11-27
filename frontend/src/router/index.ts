@@ -1,8 +1,6 @@
 // Example of how to use Vue Router
 
 import { createRouter, createWebHistory } from 'vue-router'
-import axios from 'axios';
-
 
 // 1. Define route components.
 // These can be imported from other files
