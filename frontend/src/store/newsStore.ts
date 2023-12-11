@@ -86,9 +86,6 @@ export const useNewsStore = defineStore('news', {
         console.error('Error fetching news:', error);
       }
     },
-    
-    
-    
     async fetchCommentsForNewsItem(newsItem: { id: any; comments: any; }) {
       try {
         const commentResponse = await fetch(`http://localhost:8000/api/news/${newsItem.id}/comments/`, {
@@ -129,13 +126,12 @@ export const useNewsStore = defineStore('news', {
           console.error('Error submitting comment:', error);
         }
       },
-  
+
       startReply(commentId: number, authorEmail: string) {
         this.replyingTo = commentId;
         this.replyingToEmail = authorEmail;
         this.commentText = '';
       },
-  
       async submitReply(newsItemId: any) {
         if (!this.commentText.trim()) return;
   

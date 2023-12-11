@@ -61,10 +61,14 @@
         </div>
       </div>
       </div>
+    
     <div v-else class="alert alert-warning" role="alert">
-        <p>Please log in to access this content.</p>
-    </div>
+      <p>Please log in to access this content. <a href="http://localhost:8000/login/">Click here to login</a>.</p>
+    </div> 
   </div>
+
+
+  
 </template>
 
 <script lang="ts">
